@@ -1,0 +1,37 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d0d0d;
+  color: #eaeaea;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+#arena {
+  background: #111;
+  border: 2px solid #333;
+}
+
+#hud-boss,
+#hud-player {
+  width: 100%;
+}
+
+#prayer-bar {
+  display: flex;
+  gap: 8px;
+}
