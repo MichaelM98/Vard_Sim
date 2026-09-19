@@ -17,14 +17,43 @@ export const GAME_PHASE = {
 };
 
 // ---- Arena / grid ----
-export const TILE_SIZE = 32; // px per tile on canvas
+// TILE_SIZE is now a Three.js world-unit measurement (1 tile = 1 OSRS square),
+// not a pixel size — the 3D scene scales with the browser window instead.
+export const TILE_SIZE = 1;
 export const GRID_COLS = 21;
 export const GRID_ROWS = 21;
-export const CANVAS_WIDTH = GRID_COLS * TILE_SIZE;
-export const CANVAS_HEIGHT = GRID_ROWS * TILE_SIZE;
+export const ARENA_WIDTH = GRID_COLS * TILE_SIZE;
+export const ARENA_DEPTH = GRID_ROWS * TILE_SIZE;
 
 // Arena center, used by mechanics that radiate from the boss (axes, gaze)
 export const ARENA_CENTER = { x: Math.floor(GRID_COLS / 2), y: Math.floor(GRID_ROWS / 2) };
+
+// ---- 3D scene ----
+export const SCENE = {
+  BACKGROUND_COLOR: 0x0d0d10,
+  FOG_COLOR: 0x0d0d10,
+  FOG_NEAR: 15,
+  FOG_FAR: 40,
+  GROUND_COLOR: 0x1c1c1c,
+  GRID_LINE_COLOR: 0x3a3a3a,
+};
+
+export const CAMERA = {
+  FOV: 55,
+  NEAR: 0.1,
+  FAR: 100,
+  // Offset from the player's world position — OSRS-style over-the-shoulder angle.
+  OFFSET: { x: 0, y: 9, z: 7 },
+  LOOK_AHEAD: { x: 0, y: 0.5, z: -2 },
+};
+
+export const LIGHTING = {
+  AMBIENT_COLOR: 0x8888aa,
+  AMBIENT_INTENSITY: 0.6,
+  SUN_COLOR: 0xfff2d0,
+  SUN_INTENSITY: 1.2,
+  SUN_POSITION: { x: 10, y: 20, z: 10 },
+};
 
 // ---- Player ----
 export const PLAYER = {

@@ -2,36 +2,111 @@
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 100%;
+  overflow: hidden;
   background: #0d0d0d;
   color: #eaeaea;
   font-family: 'Segoe UI', sans-serif;
 }
 
 #app {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
+  position: relative;
+  width: 100vw;
+  height: 100vh;
 }
 
 #arena {
-  background: #111;
-  border: 2px solid #333;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 #hud-boss,
 #hud-player {
-  width: 100%;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+#hud-boss {
+  top: 16px;
+}
+
+#hud-player {
+  bottom: 16px;
 }
 
 #prayer-bar {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
   display: flex;
   gap: 8px;
+}
+
+#settings-toggle {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: #1c1c22;
+  color: #eaeaea;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#settings-toggle:hover {
+  background: #2a2a32;
+}
+
+#settings-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 260px;
+  height: 100%;
+  background: rgba(15, 15, 20, 0.95);
+  border-right: 1px solid #333;
+  padding: 56px 16px 16px;
+  overflow-y: auto;
+}
+
+#settings-panel.hidden {
+  display: none;
+}
+
+#settings-panel h2 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  color: #cfcfcf;
+}
+
+.plugin-row {
+  border-bottom: 1px solid #2a2a2a;
+  padding: 10px 0;
+}
+
+.plugin-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.plugin-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  padding-left: 24px;
+  font-size: 0.85rem;
+  color: #aaa;
 }
