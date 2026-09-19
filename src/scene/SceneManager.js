@@ -39,6 +39,7 @@ export class SceneManager {
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
     this.scene.add(ground);
+    this.ground = ground;
 
     const grid = new THREE.GridHelper(Math.max(ARENA_WIDTH, ARENA_DEPTH), Math.max(GRID_COLS, GRID_ROWS), SCENE.GRID_LINE_COLOR, SCENE.GRID_LINE_COLOR);
     grid.position.y = 0.01; // avoid z-fighting with the ground plane

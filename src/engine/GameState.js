@@ -8,6 +8,7 @@ export function createGameState() {
     tick: 0,
     player: {
       tile: { ...PLAYER.START_TILE },
+      targetTile: null,
       hp: PLAYER.MAX_HP,
       prayerPoints: MAX_PRAYER_POINTS,
       activePrayer: null,

@@ -5,11 +5,13 @@ import { createGameState } from './engine/GameState.js';
 import { TickEngine } from './engine/TickEngine.js';
 import { SceneManager } from './scene/SceneManager.js';
 import { createPlayerMesh, createBossMesh } from './entities/meshes.js';
+import { stepTowardTarget } from './entities/Player.js';
 import { tileToWorld } from './utils/grid.js';
-import { GAME_PHASE, CAMERA, BOSS } from './constants.js';
+import { GAME_PHASE, CAMERA } from './constants.js';
 import { PluginRegistry } from './plugins/PluginRegistry.js';
 import { createTileMarkersPlugin } from './plugins/tileMarkers.js';
 import { SettingsPanel } from './ui/SettingsPanel.js';
+import { setupInput } from './systems/input.js';
 
 const state = createGameState();
 const canvas = document.getElementById('arena');
@@ -30,14 +32,17 @@ settingsToggle.addEventListener('click', () => {
   settingsPanel.classList.toggle('hidden');
 });
 
-// Demo tiles around the boss so the Tile Markers plugin has something to
-// show before a mechanic (swinging axes) is driving it for real.
-const demoTiles = [
-  { x: BOSS.START_TILE.x - 1, y: BOSS.START_TILE.y + 3 },
-  { x: BOSS.START_TILE.x + 1, y: BOSS.START_TILE.y + 3 },
-  { x: BOSS.START_TILE.x, y: BOSS.START_TILE.y + 4 },
-];
-plugins.get('tileMarkers').setMarkedTiles(demoTiles, plugins.getSettings('tileMarkers'));
+setupInput({
+  canvas,
+  camera: sceneManager.camera,
+  ground: sceneManager.ground,
+  onMoveClick: (tile) => {
+    state.player.targetTile = tile;
+  },
+  onMarkerClick: (tile) => {
+    plugins.get('tileMarkers').toggleTile(tile);
+  },
+});
 
 function syncMeshesToState() {
   const playerPos = tileToWorld(state.player.tile);
@@ -64,6 +69,7 @@ function updateCamera() {
 // Logic runs on fixed 600ms ticks (mechanics resolve here).
 const engine = new TickEngine((tickCount) => {
   state.tick = tickCount;
+  stepTowardTarget(state.player);
 });
 
 // Rendering runs on the browser's own refresh rate, independent of ticks.
