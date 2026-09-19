@@ -10,9 +10,12 @@ import { tileToWorld } from './utils/grid.js';
 import { GAME_PHASE, CAMERA, TICK_MS } from './constants.js';
 import { PluginRegistry } from './plugins/PluginRegistry.js';
 import { createTileMarkersPlugin } from './plugins/tileMarkers.js';
+import { createAttackTelegraphsPlugin } from './plugins/attackTelegraphs.js';
 import { SettingsPanel } from './ui/SettingsPanel.js';
 import { ContextMenu } from './ui/ContextMenu.js';
 import { setupInput } from './systems/input.js';
+import { tickSwingingAxes } from './mechanics/swingingAxes.js';
+import { Hud } from './render/Hud.js';
 
 const state = createGameState();
 const canvas = document.getElementById('arena');
@@ -25,6 +28,9 @@ sceneManager.scene.add(bossMesh);
 
 const plugins = new PluginRegistry(sceneManager);
 plugins.register(createTileMarkersPlugin());
+plugins.register(createAttackTelegraphsPlugin());
+
+const hud = new Hud(document.getElementById('hud-boss'), document.getElementById('hud-player'));
 
 const settingsPanel = document.getElementById('settings-panel');
 const settingsToggle = document.getElementById('settings-toggle');
@@ -78,12 +84,19 @@ function updateCamera() {
 const engine = new TickEngine((tickCount) => {
   state.tick = tickCount;
   stepTowardTarget(state.player, performance.now());
+
+  const axesResult = tickSwingingAxes(state.mechanics.swingingAxes, state.player.tile);
+  if (axesResult.damage > 0) {
+    state.player.hp = Math.max(0, state.player.hp - axesResult.damage);
+  }
+  plugins.get('attackTelegraphs').updateMechanicState(axesResult, state.mechanics.swingingAxes.center);
 });
 
 // Rendering runs on the browser's own refresh rate, independent of ticks.
 function renderLoop() {
   syncMeshesToState();
   updateCamera();
+  hud.update(state);
   sceneManager.render();
   requestAnimationFrame(renderLoop);
 }

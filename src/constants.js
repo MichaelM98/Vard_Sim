@@ -95,15 +95,17 @@ export const PRAYERS = {
 export const MAX_PRAYER_POINTS = 99;
 
 // ---- Mechanic 1: Swinging axes (quadrant sweep + axe skip) ----
+// A quadrant telegraphs for WARNING_TICKS, then is lethal for ACTIVE_TICKS,
+// then rotation advances to the next quadrant (clockwise). Total cycle
+// length per quadrant is WARNING_TICKS + ACTIVE_TICKS.
 export const SWINGING_AXES = {
   QUADRANT_COUNT: 4,
   WARNING_TICKS: 2, // telegraph ticks before a quadrant becomes lethal
   ACTIVE_TICKS: 2, // ticks a quadrant stays lethal once triggered
-  ROTATION_TICKS: 3, // ticks between quadrant advances
   DAMAGE: 40,
   // "Axe skip": stepping into the *next* quadrant during the final
-  // warning tick of the current one, before it goes active, to skip
-  // a full rotation instead of waiting it out.
+  // warning tick(s) of the current one, before it goes active, skips
+  // straight to that quadrant instead of waiting through this one.
   SKIP_WINDOW_TICKS: 1,
 };
 

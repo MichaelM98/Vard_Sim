@@ -24,3 +24,15 @@ export function isInBounds(tile) {
 export function tileDistance(a, b) {
   return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
 }
+
+// Splits the arena into 4 quadrants around a center tile, numbered clockwise
+// starting from the north-east (0=NE, 1=SE, 2=SW, 3=NW). Used by mechanics
+// that rotate an attack around the boss (swinging axes, head gaze).
+export function getQuadrant(tile, center) {
+  const dx = tile.x - center.x;
+  const dy = tile.y - center.y;
+  if (dx >= 0 && dy < 0) return 0;
+  if (dx >= 0 && dy >= 0) return 1;
+  if (dx < 0 && dy >= 0) return 2;
+  return 3;
+}
