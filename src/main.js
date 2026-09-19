@@ -5,9 +5,9 @@ import { createGameState } from './engine/GameState.js';
 import { TickEngine } from './engine/TickEngine.js';
 import { SceneManager } from './scene/SceneManager.js';
 import { createPlayerMesh, createBossMesh } from './entities/meshes.js';
-import { stepTowardTarget } from './entities/Player.js';
+import { stepTowardTarget, getVisualTile } from './entities/Player.js';
 import { tileToWorld } from './utils/grid.js';
-import { GAME_PHASE, CAMERA } from './constants.js';
+import { GAME_PHASE, CAMERA, TICK_MS } from './constants.js';
 import { PluginRegistry } from './plugins/PluginRegistry.js';
 import { createTileMarkersPlugin } from './plugins/tileMarkers.js';
 import { SettingsPanel } from './ui/SettingsPanel.js';
@@ -52,7 +52,8 @@ setupInput({
 });
 
 function syncMeshesToState() {
-  const playerPos = tileToWorld(state.player.tile);
+  const visualTile = getVisualTile(state.player, performance.now(), TICK_MS);
+  const playerPos = tileToWorld(visualTile);
   playerMesh.position.set(playerPos.x, 0, playerPos.z);
 
   const bossPos = tileToWorld(state.boss.tile);
@@ -76,7 +77,7 @@ function updateCamera() {
 // Logic runs on fixed 600ms ticks (mechanics resolve here).
 const engine = new TickEngine((tickCount) => {
   state.tick = tickCount;
-  stepTowardTarget(state.player);
+  stepTowardTarget(state.player, performance.now());
 });
 
 // Rendering runs on the browser's own refresh rate, independent of ticks.
