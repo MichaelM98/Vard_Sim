@@ -11,6 +11,7 @@ export function createGameState() {
       tile: { ...PLAYER.START_TILE },
       targetTile: null,
       hp: PLAYER.MAX_HP,
+      bleed: null,
       prayerPoints: MAX_PRAYER_POINTS,
       activePrayer: null,
     },
@@ -20,7 +21,7 @@ export function createGameState() {
       enraged: false,
     },
     mechanics: {
-      swingingAxes: createSwingingAxesState({ ...BOSS.START_TILE }),
+      swingingAxes: createSwingingAxesState(),
     },
   };
 }

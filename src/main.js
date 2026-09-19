@@ -4,10 +4,10 @@
 import { createGameState } from './engine/GameState.js';
 import { TickEngine } from './engine/TickEngine.js';
 import { SceneManager } from './scene/SceneManager.js';
-import { createPlayerMesh, createBossMesh } from './entities/meshes.js';
-import { stepTowardTarget, getVisualTile } from './entities/Player.js';
+import { createPlayerMesh, createBossMesh, createPillarMesh } from './entities/meshes.js';
+import { stepTowardTarget, getVisualTile, applyBleed, tickBleed } from './entities/Player.js';
 import { tileToWorld } from './utils/grid.js';
-import { GAME_PHASE, CAMERA, TICK_MS } from './constants.js';
+import { GAME_PHASE, CAMERA, TICK_MS, ARENA_CENTER, SWINGING_AXES } from './constants.js';
 import { PluginRegistry } from './plugins/PluginRegistry.js';
 import { createTileMarkersPlugin } from './plugins/tileMarkers.js';
 import { createAttackTelegraphsPlugin } from './plugins/attackTelegraphs.js';
@@ -25,6 +25,26 @@ const playerMesh = createPlayerMesh();
 const bossMesh = createBossMesh();
 sceneManager.scene.add(playerMesh);
 sceneManager.scene.add(bossMesh);
+
+// Cosmetic pillars around the boss — 8 total in a ring, matching the real
+// arena, each offset off the axe lanes (the 4 straight + 4 diagonal lines
+// through the arena center).
+const PILLAR_OFFSETS = [
+  { x: 5, y: 2 },
+  { x: 2, y: 5 },
+  { x: -2, y: 5 },
+  { x: -5, y: 2 },
+  { x: -5, y: -2 },
+  { x: -2, y: -5 },
+  { x: 2, y: -5 },
+  { x: 5, y: -2 },
+];
+for (const offset of PILLAR_OFFSETS) {
+  const pillar = createPillarMesh();
+  const pos = tileToWorld({ x: ARENA_CENTER.x + offset.x, y: ARENA_CENTER.y + offset.y });
+  pillar.position.set(pos.x, 1.5, pos.z);
+  sceneManager.scene.add(pillar);
+}
 
 const plugins = new PluginRegistry(sceneManager);
 plugins.register(createTileMarkersPlugin());
@@ -83,13 +103,22 @@ function updateCamera() {
 // Logic runs on fixed 600ms ticks (mechanics resolve here).
 const engine = new TickEngine((tickCount) => {
   state.tick = tickCount;
-  stepTowardTarget(state.player, performance.now());
+  const moved = stepTowardTarget(state.player, performance.now());
 
-  const axesResult = tickSwingingAxes(state.mechanics.swingingAxes, state.player.tile);
-  if (axesResult.damage > 0) {
-    state.player.hp = Math.max(0, state.player.hp - axesResult.damage);
+  const axesResult = tickSwingingAxes(state.mechanics.swingingAxes, state.player.tile, state.boss.hp);
+  if (axesResult.hit) {
+    applyBleed(state.player, {
+      procs: SWINGING_AXES.BLEED_PROC_COUNT,
+      damagePerProc: SWINGING_AXES.BLEED_DAMAGE_PER_PROC,
+      interval: SWINGING_AXES.BLEED_PROC_INTERVAL_TICKS,
+    });
   }
-  plugins.get('attackTelegraphs').updateMechanicState(axesResult, state.mechanics.swingingAxes.center);
+  const bleedDamage = tickBleed(state.player, moved);
+  const totalDamage = axesResult.damage + bleedDamage;
+  if (totalDamage > 0) {
+    state.player.hp = Math.max(0, state.player.hp - totalDamage);
+  }
+  plugins.get('attackTelegraphs').updateDangerTiles(axesResult.dangerTiles, axesResult.warningTiles);
 });
 
 // Rendering runs on the browser's own refresh rate, independent of ticks.

@@ -1,45 +1,89 @@
-// Mechanic 1: Swinging axes — a lethal quadrant rotates clockwise around the
-// boss. Pure game logic only; rendering the telegraph lives in
-// plugins/attackTelegraphs.js so it stays configurable like any other plugin.
+// Mechanic 1: Swinging axes — axes spawn at the edge of the room and travel
+// in a straight or diagonal line to the opposite side, one tile per tick.
+// Pure game logic only; plugins/attackTelegraphs.js renders the result.
+//
+// There's no separate "axe skip" logic here: since danger is just "don't be
+// on this tile this tick," the real skip trick from the actual fight is just
+// clicking precisely with the click-to-move system, which the engine
+// already supports — no special-casing needed.
 
-import { SWINGING_AXES } from '../constants.js';
-import { getQuadrant } from '../utils/grid.js';
+import { SWINGING_AXES, GRID_COLS, GRID_ROWS, ARENA_CENTER } from '../constants.js';
 
-export function createSwingingAxesState(center) {
+function buildLanes() {
+  const { x: cx, y: cy } = ARENA_CENTER;
+  const maxX = GRID_COLS - 1;
+  const maxY = GRID_ROWS - 1;
+  return [
+    { start: { x: cx, y: 0 }, dir: { x: 0, y: 1 } }, // N -> S
+    { start: { x: cx, y: maxY }, dir: { x: 0, y: -1 } }, // S -> N
+    { start: { x: 0, y: cy }, dir: { x: 1, y: 0 } }, // W -> E
+    { start: { x: maxX, y: cy }, dir: { x: -1, y: 0 } }, // E -> W
+    { start: { x: 0, y: 0 }, dir: { x: 1, y: 1 } }, // NW -> SE
+    { start: { x: maxX, y: 0 }, dir: { x: -1, y: 1 } }, // NE -> SW
+    { start: { x: 0, y: maxY }, dir: { x: 1, y: -1 } }, // SW -> NE
+    { start: { x: maxX, y: maxY }, dir: { x: -1, y: -1 } }, // SE -> NW
+  ];
+}
+
+const LANES = buildLanes();
+
+function buildPath(lane) {
+  const path = [];
+  let { x, y } = lane.start;
+  while (x >= 0 && x < GRID_COLS && y >= 0 && y < GRID_ROWS) {
+    path.push({ x, y });
+    x += lane.dir.x;
+    y += lane.dir.y;
+  }
+  return path;
+}
+
+function axeCountForHp(hp) {
+  if (hp > SWINGING_AXES.HP_THRESHOLD_TWO_AXES) return 1;
+  if (hp > SWINGING_AXES.HP_THRESHOLD_THREE_AXES) return 2;
+  return 3;
+}
+
+function pickLanes(count) {
+  return [...LANES].sort(() => Math.random() - 0.5).slice(0, count);
+}
+
+export function createSwingingAxesState() {
   return {
-    center,
-    currentQuadrant: 0,
-    ticksInCycle: 0, // 0-indexed tick within the current quadrant's full cycle
+    axes: [], // { path: [{x,y}, ...], index }
+    ticksUntilNextWave: SWINGING_AXES.WAVE_INTERVAL_TICKS,
   };
 }
 
-export function tickSwingingAxes(mechState, playerTile) {
-  const { WARNING_TICKS, ACTIVE_TICKS, SKIP_WINDOW_TICKS, QUADRANT_COUNT, DAMAGE } = SWINGING_AXES;
-  const cycleLength = WARNING_TICKS + ACTIVE_TICKS;
-  const nextQuadrant = (mechState.currentQuadrant + 1) % QUADRANT_COUNT;
-  const playerQuadrant = getQuadrant(playerTile, mechState.center);
-
-  const isWarning = mechState.ticksInCycle < WARNING_TICKS;
-  const ticksLeftInWarning = WARNING_TICKS - mechState.ticksInCycle;
-
-  // Axe skip: already standing in the next quadrant during the closing
-  // warning ticks skips straight to it instead of waiting out this one.
-  if (isWarning && ticksLeftInWarning <= SKIP_WINDOW_TICKS && playerQuadrant === nextQuadrant) {
-    mechState.currentQuadrant = nextQuadrant;
-    mechState.ticksInCycle = 0;
-    return { damage: 0, skipped: true, warningQuadrant: null, dangerQuadrant: null };
+export function tickSwingingAxes(mechState, playerTile, bossHp) {
+  mechState.ticksUntilNextWave -= 1;
+  if (mechState.ticksUntilNextWave <= 0) {
+    const count = axeCountForHp(bossHp);
+    for (const lane of pickLanes(count)) {
+      mechState.axes.push({ path: buildPath(lane), index: 0 });
+    }
+    mechState.ticksUntilNextWave = SWINGING_AXES.WAVE_INTERVAL_TICKS;
   }
 
-  const isActive = !isWarning;
-  const damage = isActive && playerQuadrant === mechState.currentQuadrant ? DAMAGE : 0;
-  const warningQuadrant = isWarning ? mechState.currentQuadrant : null;
-  const dangerQuadrant = isActive ? mechState.currentQuadrant : null;
+  const dangerTiles = [];
+  const warningTiles = [];
+  let hit = false;
 
-  mechState.ticksInCycle += 1;
-  if (mechState.ticksInCycle >= cycleLength) {
-    mechState.currentQuadrant = nextQuadrant;
-    mechState.ticksInCycle = 0;
+  for (const axe of mechState.axes) {
+    const currentTile = axe.path[axe.index];
+    if (currentTile) {
+      dangerTiles.push(currentTile);
+      if (currentTile.x === playerTile.x && currentTile.y === playerTile.y) {
+        hit = true;
+      }
+    }
+    const nextTile = axe.path[axe.index + SWINGING_AXES.WARNING_TICKS];
+    if (nextTile) warningTiles.push(nextTile);
   }
 
-  return { damage, skipped: false, warningQuadrant, dangerQuadrant };
+  mechState.axes = mechState.axes
+    .map((axe) => ({ ...axe, index: axe.index + 1 }))
+    .filter((axe) => axe.index < axe.path.length);
+
+  return { damage: hit ? SWINGING_AXES.DAMAGE : 0, hit, dangerTiles, warningTiles };
 }

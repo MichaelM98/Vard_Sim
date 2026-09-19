@@ -58,16 +58,18 @@ export const LIGHTING = {
 // ---- Player ----
 export const PLAYER = {
   MAX_HP: 99,
-  START_TILE: { x: 10, y: 17 },
+  START_TILE: { x: 12, y: 14 }, // off the axis/diagonal lanes through the boss
   WALK_TILES_PER_TICK: 1,
   RUN_TILES_PER_TICK: 2,
 };
 
 // ---- Boss ----
+// Vardorvis stands at the arena's center, matching the real fight's room
+// (axes travel wall-to-wall through the boss's position).
 export const BOSS = {
   NAME: 'Vardorvis',
-  MAX_HP: 640,
-  START_TILE: { x: 8, y: 3 },
+  MAX_HP: 700, // OSRS Wiki infobox value
+  START_TILE: { ...ARENA_CENTER },
   SIZE_TILES: 5, // Vardorvis occupies a 5x5 footprint
   ENRAGE_HP_PERCENT: 0.33, // enrage triggers below this fraction of max HP
   ENRAGE_ATTACK_SPEED_MULTIPLIER: 0.75, // lower = faster attack cadence
@@ -94,19 +96,23 @@ export const PRAYERS = {
 };
 export const MAX_PRAYER_POINTS = 99;
 
-// ---- Mechanic 1: Swinging axes (quadrant sweep + axe skip) ----
-// A quadrant telegraphs for WARNING_TICKS, then is lethal for ACTIVE_TICKS,
-// then rotation advances to the next quadrant (clockwise). Total cycle
-// length per quadrant is WARNING_TICKS + ACTIVE_TICKS.
+// ---- Mechanic 1: Swinging axes ----
+// Per the OSRS Wiki: axes spawn and travel in straight or diagonal lines
+// across the room to the opposite side. 1 axe above 690 HP, 2 between 231
+// and 690, 3 at or below 231. A hit deals DAMAGE plus a stacking bleed that
+// procs faster if the player keeps moving instead of standing still.
+// There's no separate "axe skip" logic — since danger is just "don't be on
+// this tile this tick," the real skip trick is just clicking precisely with
+// the click-to-move system, which the engine already supports.
 export const SWINGING_AXES = {
-  QUADRANT_COUNT: 4,
-  WARNING_TICKS: 2, // telegraph ticks before a quadrant becomes lethal
-  ACTIVE_TICKS: 2, // ticks a quadrant stays lethal once triggered
-  DAMAGE: 40,
-  // "Axe skip": stepping into the *next* quadrant during the final
-  // warning tick(s) of the current one, before it goes active, skips
-  // straight to that quadrant instead of waiting through this one.
-  SKIP_WINDOW_TICKS: 1,
+  WAVE_INTERVAL_TICKS: 6, // ticks between axe waves
+  WARNING_TICKS: 1, // ticks a tile is telegraphed before an axe steps onto it
+  DAMAGE: 35,
+  HP_THRESHOLD_TWO_AXES: 690,
+  HP_THRESHOLD_THREE_AXES: 231,
+  BLEED_PROC_COUNT: 5,
+  BLEED_DAMAGE_PER_PROC: 3,
+  BLEED_PROC_INTERVAL_TICKS: 3, // while standing still; every tick while moving
 };
 
 // ---- Mechanic 2: Head gaze (prayer-switch attack) ----

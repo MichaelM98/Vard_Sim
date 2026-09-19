@@ -1,11 +1,11 @@
-// Player entity: position and per-tick movement resolution toward a click target.
+// Player entity: position, per-tick movement resolution, and the bleed
+// status effect (currently inflicted by the swinging axes mechanic, but
+// kept generic here since it's player state, not mechanic-specific logic).
 // OSRS walk speed is 1 tile per tick, 8-directional (diagonal counts as 1 tile).
-// The logical tile jumps once per tick; moveAnim records that jump so the
-// renderer can glide the mesh across it smoothly instead of snapping.
 
 export function stepTowardTarget(player, now) {
   const { tile, targetTile } = player;
-  if (!targetTile) return;
+  if (!targetTile) return false;
 
   const from = { ...tile };
   tile.x += Math.sign(targetTile.x - tile.x);
@@ -15,6 +15,7 @@ export function stepTowardTarget(player, now) {
   if (tile.x === targetTile.x && tile.y === targetTile.y) {
     player.targetTile = null;
   }
+  return true;
 }
 
 export function getVisualTile(player, now, tickMs) {
@@ -25,4 +26,27 @@ export function getVisualTile(player, now, tickMs) {
     x: from.x + (to.x - from.x) * t,
     y: from.y + (to.y - from.y) * t,
   };
+}
+
+export function applyBleed(player, { procs, damagePerProc, interval }) {
+  player.bleed = { procsRemaining: procs, damagePerProc, interval, ticksSinceProc: 0 };
+}
+
+// Bleed procs on a fixed interval while standing still, but every tick
+// while moving — matching the real fight's "don't run while bleeding" trap.
+export function tickBleed(player, moved) {
+  const bleed = player.bleed;
+  if (!bleed || bleed.procsRemaining <= 0) {
+    player.bleed = null;
+    return 0;
+  }
+
+  bleed.ticksSinceProc += 1;
+  const effectiveInterval = moved ? 1 : bleed.interval;
+  if (bleed.ticksSinceProc >= effectiveInterval) {
+    bleed.ticksSinceProc = 0;
+    bleed.procsRemaining -= 1;
+    return bleed.damagePerProc;
+  }
+  return 0;
 }

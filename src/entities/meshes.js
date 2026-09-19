@@ -44,3 +44,12 @@ export function createBossMesh() {
 
   return group;
 }
+
+// Cosmetic room pillars, matching the real arena's look — purely visual,
+// not part of tile-safety logic (safety is just "not on a danger tile").
+export function createPillarMesh() {
+  return new THREE.Mesh(
+    new THREE.CylinderGeometry(0.45, 0.5, 3, 10),
+    new THREE.MeshStandardMaterial({ color: 0x4a4a52 })
+  );
+}
