@@ -39,6 +39,17 @@ export class PluginRegistry {
     return Array.from(this.plugins.values());
   }
 
+  collectContextMenuItems(tile) {
+    const items = [];
+    for (const plugin of this.plugins.values()) {
+      if (this.settings[plugin.id]?.enabled === false) continue;
+      if (plugin.getContextMenuItems) {
+        items.push(...plugin.getContextMenuItems(tile));
+      }
+    }
+    return items;
+  }
+
   _loadSettings() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);

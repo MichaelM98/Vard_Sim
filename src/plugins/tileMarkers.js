@@ -1,6 +1,6 @@
-// Tile Markers plugin: OSRS RuneLite-style manual tile marking. Right-click a
-// tile to place a marker, right-click it again to remove it. Markers persist
-// across reloads and are drawn using the plugin's configured color/width.
+// Tile Markers plugin: OSRS RuneLite-style manual tile marking. Adds a
+// "Mark Tile" / "Remove Tile Marker" entry to the right-click menu. Markers
+// persist across reloads and are drawn using the plugin's configured color/width.
 
 import * as THREE from 'three';
 import { TILE_SIZE } from '../constants.js';
@@ -83,6 +83,15 @@ export function createTileMarkersPlugin() {
       }
       saveMarkers(Array.from(markers.values()));
       rebuild();
+    },
+    getContextMenuItems(tile) {
+      const marked = markers.has(keyOf(tile));
+      return [
+        {
+          label: marked ? 'Remove Tile Marker' : 'Mark Tile',
+          onClick: () => this.toggleTile(tile),
+        },
+      ];
     },
   };
 }

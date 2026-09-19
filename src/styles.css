@@ -110,3 +110,29 @@ body {
   font-size: 0.85rem;
   color: #aaa;
 }
+
+/* OSRS-style right-click context menu */
+#context-menu {
+  position: fixed;
+  background: rgba(15, 15, 20, 0.95);
+  border: 1px solid #5a5a5a;
+  min-width: 140px;
+  z-index: 1000;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+#context-menu.hidden {
+  display: none;
+}
+
+.context-menu-item {
+  padding: 4px 10px;
+  cursor: pointer;
+  color: #fff;
+}
+
+.context-menu-item:hover {
+  background: #ff981f;
+  color: #000;
+}

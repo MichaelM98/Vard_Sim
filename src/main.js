@@ -11,6 +11,7 @@ import { GAME_PHASE, CAMERA } from './constants.js';
 import { PluginRegistry } from './plugins/PluginRegistry.js';
 import { createTileMarkersPlugin } from './plugins/tileMarkers.js';
 import { SettingsPanel } from './ui/SettingsPanel.js';
+import { ContextMenu } from './ui/ContextMenu.js';
 import { setupInput } from './systems/input.js';
 
 const state = createGameState();
@@ -32,6 +33,8 @@ settingsToggle.addEventListener('click', () => {
   settingsPanel.classList.toggle('hidden');
 });
 
+const contextMenu = new ContextMenu();
+
 setupInput({
   canvas,
   camera: sceneManager.camera,
@@ -39,8 +42,12 @@ setupInput({
   onMoveClick: (tile) => {
     state.player.targetTile = tile;
   },
-  onMarkerClick: (tile) => {
-    plugins.get('tileMarkers').toggleTile(tile);
+  onContextMenu: (tile, x, y) => {
+    const items = [
+      { label: 'Walk here', onClick: () => { state.player.targetTile = tile; } },
+      ...plugins.collectContextMenuItems(tile),
+    ];
+    contextMenu.show(x, y, items);
   },
 });
 

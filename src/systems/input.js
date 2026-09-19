@@ -1,10 +1,11 @@
-// Input system: left click on the ground = move target, right click = toggle
-// a tile marker. Both resolve a screen click to a tile via raycasting.
+// Input system: left click on the ground walks there directly (OSRS default
+// action). Right click opens a context menu of options for that tile instead
+// of acting immediately — resolving a screen click to a tile via raycasting.
 
 import * as THREE from 'three';
 import { worldToTile, isInBounds } from '../utils/grid.js';
 
-export function setupInput({ canvas, camera, ground, onMoveClick, onMarkerClick }) {
+export function setupInput({ canvas, camera, ground, onMoveClick, onContextMenu }) {
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
 
@@ -29,6 +30,6 @@ export function setupInput({ canvas, camera, ground, onMoveClick, onMarkerClick 
   canvas.addEventListener('contextmenu', (event) => {
     event.preventDefault();
     const tile = raycastToTile(event);
-    if (tile) onMarkerClick(tile);
+    if (tile) onContextMenu(tile, event.clientX, event.clientY);
   });
 }
